@@ -3,18 +3,19 @@ import React from 'react'
 import HomeScreen from './Screens/HomeScreen'
 import { QueryClientProvider,QueryClient } from 'react-query'
 import { NavigationContainer } from '@react-navigation/native';
-import ContactCardsHomeScreen from './components/contactCardsHomeScreen';
+import {createNativeStackNavigator} from '@react-navigation/native-stack'
 
 const queryClient = new QueryClient();
 const App = () => {
+  const Stack = createNativeStackNavigator();
   return (
     <QueryClientProvider client={queryClient}>
-      <NavigationContainer>
-        {/* <HomeScreen /> */}
-        <ContactCardsHomeScreen />
-      </NavigationContainer>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Home" component={HomeScreen}  />
+      </Stack.Navigator>
+    </NavigationContainer>
     </QueryClientProvider>
-    
   )
 }
 

@@ -1,106 +1,265 @@
-import { Image, ScrollView, StyleSheet, Text, Touchable, TouchableOpacity, View } from 'react-native';
-import React from 'react';
-import Icon from 'react-native-vector-icons/AntDesign';
-const Data = [
-  {
-    index: 6,
-    picture: 'http://placehold.it/32x32',
-    age: 35,
-    firstname: 'Brock',
-    surname: 'Burton',
-    gender: 'male',
-    company: 'PROSELY',
-    email: 'brockburton@prosely.com',
-    phone: '+1 (966) 525-3347',
-  },
-];
+import React, { useState, useEffect } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Animated } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { useQuery } from 'react-query';
+import axios from 'axios';
 
-const ContactCardsHomeScreen = () => {
+interface Connection {
+  firstname: string;
+  surname: string;
+  company: string;
+  picture: string;
+}
+
+const allConnectionsUrl = 'https://run.mocky.io/v3/0bff210c-7fc8-4964-a555-8d93de3d5f17';
+
+const fetchAllConnections = async (): Promise<Connection[]> => {
+  const response = await axios.get(allConnectionsUrl);
+  return response.data;
+};
+
+const ContactCardsHomeScreen: React.FC = () => {
+  const { isLoading, data } = useQuery<Connection[]>('connections', fetchAllConnections);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredData, setFilteredData] = useState<Connection[]>([]);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [searchResultNotFound, setSearchResultNotFound] = useState(false);
+  const searchResultAnimation = useState(new Animated.Value(0))[0];
+
+  useEffect(() => {
+    handleSearch();
+  }, [data]);
+
+  const handleSearch = () => {
+    if (data) {
+      const filtered = data.filter(
+        (connection) =>
+          connection.firstname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          connection.surname.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredData(filtered);
+
+      if (filtered.length === 0) {
+        showSearchResultNotFound();
+      } else {
+        hideSearchResultNotFound();
+      }
+    }
+  };
+
+  const showSearchResultNotFound = () => {
+    Animated.timing(searchResultAnimation, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideSearchResultNotFound = () => {
+    Animated.timing(searchResultAnimation, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const resetSearchResult = () => {
+    setSearchQuery('');
+    setFilteredData([]);
+    hideSearchResultNotFound();
+  };
+
+  if (isLoading) {
+    return <Text>Loading...</Text>;
+  }
+
+  const handleSort = () => {
+    const sorted = [...filteredData].sort((a, b) => {
+      if (a.firstname === b.firstname) {
+        return a.surname.localeCompare(b.surname);
+      }
+      return a.firstname.localeCompare(b.firstname);
+    });
+
+    if (sortOrder === 'asc') {
+      setFilteredData(sorted);
+      setSortOrder('desc');
+    } else {
+      setFilteredData(sorted.reverse());
+      setSortOrder('asc');
+    }
+  };
+
   return (
-    <ScrollView>
-      <View style={styles.maincontainer}>
-        <View>
-          <Image source={{ uri: Data[0].picture }} style={styles.profileImage} />
-        </View>
-        <View style={styles.infocontainer}>
-          <View style={styles.nametext}>
-            <Text style={styles.firstname}>{Data[0].firstname}</Text>
-            <Text style={styles.surname}>{Data[0].surname}</Text>
-            <TouchableOpacity  style={styles.icon}>
-            <Icon name='arrowright' size ={30}/>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.company}>{Data[0].company}</Text>
-   
-        </View>
+    <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search..."
+          placeholderTextColor="#888"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearch}
+        />
+        <TouchableOpacity style={styles.searchIconContainer} onPress={handleSearch}>
+          <Icon name="search" size={16} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.sortButton} onPress={handleSort}>
+          <Icon name={sortOrder === 'asc' ? 'sort-alpha-asc' : 'sort-alpha-desc'} size={16} color="#FFF" />
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+
+      <ScrollView contentContainerStyle={styles.cardsContainer}>
+        {filteredData.map((connection, index) => (
+          <TouchableOpacity key={index} style={[styles.card, index % 2 === 1 && styles.altCard]}>
+            <Image source={{ uri: connection.picture }} style={styles.profileImage} />
+            <View style={styles.infoContainer}>
+              <View style={styles.nameContainer}>
+                <Text style={styles.nameText}>
+                  {connection.firstname} {connection.surname}
+                </Text>
+              </View>
+              <Text style={styles.company}>{connection.company}</Text>
+            </View>
+            <TouchableOpacity style={styles.iconContainer}>
+              <Icon name="arrow-right" size={16} color="#FFF" />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {searchResultNotFound && (
+        <Animated.View
+          style={[styles.searchResultContainer, { opacity: searchResultAnimation }]}
+        >
+          <Text style={styles.searchResultText}>Search results not found</Text>
+          <TouchableOpacity style={styles.resetButton} onPress={resetSearchResult}>
+            <Icon name="times" size={16} color="#FFF" />
+          </TouchableOpacity>
+        </Animated.View>
+      )}
+    </View>
   );
 };
 
 export default ContactCardsHomeScreen;
 
 const styles = StyleSheet.create({
-  maincontainer: {
-    width: '80%',
-    height: 100,
-    backgroundColor: '#FFF',
+  container: {
+    flex: 1,
+    backgroundColor: '#F4F8FB',
+    padding: 20,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    backgroundColor: '#E9F0FA',
+    borderRadius: 20,
+    paddingLeft: 20,
+    paddingRight: 10,
+    color: '#333',
+    fontFamily: 'Popins-Regular',
+    fontSize: 16,
+  },
+  searchIconContainer: {
+    padding: 10,
+    backgroundColor: '#2E466F',
+    borderRadius: 20,
+    marginLeft: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sortButton: {
+    padding: 10,
+    backgroundColor: '#2E466F',
+    borderRadius: 20,
+    marginLeft: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardsContainer: {
+    flexGrow: 1,
+  },
+  card: {
     flexDirection: 'row',
     padding: 10,
-    marginTop: 60,
-    alignSelf: 'center',
+    marginBottom: 10,
     borderRadius: 10,
+    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#000',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: '#E9F0FA',
+    alignItems: 'center',
+  },
+  altCard: {
+    backgroundColor: '#D6E6F9',
   },
   profileImage: {
     width: 50,
     height: 50,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: '#E9F0FA',
   },
-  infocontainer: {
-    flexDirection: 'column',
-    justifyContent: 'center',
+  infoContainer: {
+    flex: 1,
     marginLeft: 10,
   },
-  nametext: {
+  nameContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 5,
   },
-  firstname: {
-    fontFamily: 'Impact',
-    color: '#000',
-    fontSize: 18,
+  nameText: {
+    fontFamily: 'Arial',
+    color: '#2E466F',
+    fontSize: 16,
+    fontWeight: 'bold',
     marginRight: 5,
   },
-  surname: {
-    fontFamily: 'Impact',
-    color: '#000',
-    fontSize: 18,
+  iconContainer: {
+    width: 25,
+    height: 25,
+    borderRadius: 12.5,
+    backgroundColor: '#2E466F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 'auto',
   },
   company: {
     fontFamily: 'Arial',
     color: '#666',
-    marginTop: 5,
+    fontSize: 14,
   },
-  icon: {
-    color: '#000',
+  searchResultContainer: {
     position: 'absolute',
-    right: 10,
-    marginRight: -100,
-    width: 50,
-    height: 50,
-    borderRadius: 50,
-    borderWidth: 1,
-    borderColor: '#000',
+    bottom: 0,
+    left: 0,
+    right: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    elevation: 3,
+    flexDirection: 'row',
+  },
+  searchResultText: {
+    fontFamily: 'Arial',
+    color: '#2E466F',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  resetButton: {
+    backgroundColor: '#2E466F',
+    borderRadius: 15,
+    padding: 5,
   },
 });

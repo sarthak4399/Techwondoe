@@ -2,34 +2,14 @@ import { Image, ScrollView, StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { useQuery } from 'react-query'
 import axios from 'axios'
+import ContactCardsHomeScreen from '../components/contactCardsHomeScreen'
 
-const allConnectionsUrl = 'https://run.mocky.io/v3/0bff210c-7fc8-4964-a555-8d93de3d5f17'
-
-const fetchAllConnections = async () => {
-  const response = await axios.get(allConnectionsUrl)
-  return response.data
-}
 
 const HomeScreen = () => {
-  const { isLoading, data } = useQuery('connections', fetchAllConnections)
-  if (isLoading) {
-    return <Text>Loading...</Text>
-  }
+
   return (
     <ScrollView>
-      {data && data.map((connection: any, key: any) => (
-        <View key={key} style={styles.connectioncard}>
-          <Image source={{ uri: connection.picture }} style={{ borderColor:'black',borderWidth:1 , height:'10%',width:'10%',}}/>
-          <Text>Age: {connection.age}</Text>
-          <Text>Firstname: {connection.firstname}</Text>
-          <Text>Surname: {connection.surname}</Text>
-          <Text>Gender: {connection.gender}</Text>
-          <Text>Company: {connection.company}</Text>
-          <Text>Email: {connection.email}</Text>
-          <Text>Phone: {connection.phone}</Text>
-        </View>
-      ))}
-
+      <ContactCardsHomeScreen />
     </ScrollView>
   )
 }
