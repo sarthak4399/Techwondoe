@@ -12,9 +12,8 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen name="Home" component={HomeScreen}  />
-        <Stack.Screen name="ProfileScreen" component={ProfileScreen}  />
-
+        <Stack.Screen name="Home" component={HomeScreen}  options={{ headerShown: false }} />
+        <Stack.Screen name="ProfileScreen" component={ProfileScreen}  options={{ headerShown: false }}  />
       </Stack.Navigator>
     </NavigationContainer>
     </QueryClientProvider>

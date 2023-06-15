@@ -1,14 +1,22 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Surface } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-const ProfileScreen: React.FC = ({ route }) => {
+const ProfileScreen: React.FC = ({ route, navigation }) => {
   const { selectedConnection } = route.params;
+
+  const handleGoBack = () => {
+    navigation.goBack();
+  };
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+        <Icon name="arrow-left" size={16} color="#FFF" />
+      </TouchableOpacity>
+
       <View style={styles.profileContainer}>
         <Image source={{ uri: selectedConnection.picture }} style={styles.profileImage} />
       </View>
@@ -49,7 +57,7 @@ const ProfileScreen: React.FC = ({ route }) => {
             <View style={styles.iconContainer}>
               <Icon name="phone" size={16} color="#031927" style={styles.icon} />
             </View>
-            <Text style={styles.infoText}>{selectedConnection.phone}</Text>
+            <Text style={styles.infoText}>{selectedConnection.phone} </Text>
           </View>
         </Animatable.View>
       </Surface>
@@ -66,6 +74,16 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    zIndex: 1,
+    backgroundColor: '#2E466F',
+    borderRadius: 30,
+    padding: 10,
+    elevation: 5,
   },
   profileContainer: {
     borderWidth: 2,
