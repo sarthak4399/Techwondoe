@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Animated } from 'react-native';
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Animated,
+  ActivityIndicator,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useQuery } from 'react-query';
 import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
 
 interface Connection {
   firstname: string;
@@ -19,6 +30,7 @@ const fetchAllConnections = async (): Promise<Connection[]> => {
 };
 
 const ContactCardsHomeScreen: React.FC = () => {
+  const navigation = useNavigation();
   const { isLoading, data } = useQuery<Connection[]>('connections', fetchAllConnections);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState<Connection[]>([]);
@@ -69,8 +81,16 @@ const ContactCardsHomeScreen: React.FC = () => {
     hideSearchResultNotFound();
   };
 
+  const LoadingComponent: React.FC = () => {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2E466F" />
+      </View>
+    );
+  };
+
   if (isLoading) {
-    return <Text>Loading...</Text>;
+    return <LoadingComponent />;
   }
 
   const handleSort = () => {
@@ -88,6 +108,10 @@ const ContactCardsHomeScreen: React.FC = () => {
       setFilteredData(sorted.reverse());
       setSortOrder('asc');
     }
+  };
+
+  const handleProfile = (selectedConnection: Connection) => {
+    navigation.navigate('ProfileScreen', { selectedConnection });
   };
 
   return (
@@ -111,7 +135,7 @@ const ContactCardsHomeScreen: React.FC = () => {
 
       <ScrollView contentContainerStyle={styles.cardsContainer}>
         {filteredData.map((connection, index) => (
-          <TouchableOpacity key={index} style={[styles.card, index % 2 === 1 && styles.altCard]}>
+          <TouchableOpacity key={index} style={[styles.card, index % 2 === 1 && styles.altCard]} onPress={() => handleProfile(connection)}>
             <Image source={{ uri: connection.picture }} style={styles.profileImage} />
             <View style={styles.infoContainer}>
               <View style={styles.nameContainer}>
@@ -121,7 +145,7 @@ const ContactCardsHomeScreen: React.FC = () => {
               </View>
               <Text style={styles.company}>{connection.company}</Text>
             </View>
-            <TouchableOpacity style={styles.iconContainer}>
+            <TouchableOpacity style={styles.iconContainer} onPress={() => handleProfile(connection)}>
               <Icon name="arrow-right" size={16} color="#FFF" />
             </TouchableOpacity>
           </TouchableOpacity>
@@ -129,13 +153,13 @@ const ContactCardsHomeScreen: React.FC = () => {
       </ScrollView>
 
       {searchResultNotFound && (
-        <Animated.View
-          style={[styles.searchResultContainer, { opacity: searchResultAnimation }]}
-        >
-          <Text style={styles.searchResultText}>Search results not found</Text>
-          <TouchableOpacity style={styles.resetButton} onPress={resetSearchResult}>
-            <Icon name="times" size={16} color="#FFF" />
-          </TouchableOpacity>
+        <Animated.View style={[styles.searchResultContainer, { opacity: searchResultAnimation }]}>
+          <View style={styles.searchResultContainer}>
+            <Text style={styles.searchResultText}>Search results not found</Text>
+            <TouchableOpacity style={styles.resetButton} onPress={resetSearchResult}>
+              <Icon name="times" size={16} color="#FFF" />
+            </TouchableOpacity>
+          </View>
         </Animated.View>
       )}
     </View>
@@ -147,8 +171,8 @@ export default ContactCardsHomeScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F8FB',
     padding: 20,
+    backgroundColor: '#F4F8FB',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -158,27 +182,27 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 40,
-    backgroundColor: '#E9F0FA',
-    borderRadius: 20,
     paddingLeft: 20,
     paddingRight: 10,
-    color: '#333',
-    fontFamily: 'Popins-Regular',
     fontSize: 16,
+    fontFamily: 'Popins-Regular',
+    backgroundColor: '#E9F0FA',
+    borderRadius: 20,
+    color: '#333',
   },
   searchIconContainer: {
     padding: 10,
+    marginLeft: 10,
     backgroundColor: '#2E466F',
     borderRadius: 20,
-    marginLeft: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sortButton: {
     padding: 10,
+    marginLeft: 10,
     backgroundColor: '#2E466F',
     borderRadius: 20,
-    marginLeft: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -208,6 +232,7 @@ const styles = StyleSheet.create({
   infoContainer: {
     flex: 1,
     marginLeft: 10,
+    marginRight: 10,
   },
   nameContainer: {
     flexDirection: 'row',
@@ -215,51 +240,40 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   nameText: {
-    fontFamily: 'Arial',
-    color: '#2E466F',
     fontSize: 16,
     fontWeight: 'bold',
-    marginRight: 5,
-  },
-  iconContainer: {
-    width: 25,
-    height: 25,
-    borderRadius: 12.5,
-    backgroundColor: '#2E466F',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 'auto',
+    color: '#333',
   },
   company: {
-    fontFamily: 'Arial',
-    color: '#666',
     fontSize: 14,
+    color: '#666',
   },
-  searchResultContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  iconContainer: {
+    padding: 10,
+    backgroundColor: '#2E466F',
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    elevation: 3,
+  },
+  searchResultContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
   },
   searchResultText: {
-    fontFamily: 'Arial',
-    color: '#2E466F',
+    flex: 1,
+    color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 5,
   },
   resetButton: {
-    backgroundColor: '#2E466F',
-    borderRadius: 15,
-    padding: 5,
+    marginLeft: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
