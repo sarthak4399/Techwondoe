@@ -135,8 +135,8 @@ const ContactCardsHomeScreen: React.FC = () => {
 
       <ScrollView contentContainerStyle={styles.cardsContainer}>
         {filteredData.map((connection, index) => (
-          <TouchableOpacity key={index} style={[styles.card, index % 2 === 1 && styles.altCard]} onPress={() => handleProfile(connection)}>
-            <Image source={{ uri: connection.picture }} style={styles.profileImage} />
+          <TouchableOpacity key={index} style={styles.card} onPress={() => handleProfile(connection)}>
+            <Image source={{ uri: connection.picture }} alt='' style={styles.profileImage} />
             <View style={styles.infoContainer}>
               <View style={styles.nameContainer}>
                 <Text style={styles.nameText}>
